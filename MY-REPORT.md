@@ -4,7 +4,7 @@
 
 Optimizing prompt engineering techniques to enhance automated requirements analysis for AI-driven software development.
 
-* Authors: [Sathvik Gajula](sgajula2025@fau.edu), [Satya Teja Yannam (Z23792803)](syannam2024@fau.edu), [Shashidhar Rameshwaram (Z23751768)](srameshwaram2024@fau.edu)
+* Authors: [Sathvik Gajula (Z23734253)](sgajula2023@fau.edu), [Satya Teja Yannam (Z23792803)](syannam2024@fau.edu), [Shashidhar Rameshwaram (Z23751768)](srameshwaram2024@fau.edu)
 * Academic Supervisor: [Dr. Fernando Koch](http://www.fernandokoch.me)
 
 ## Research Question
