@@ -1,0 +1,14 @@
+
+MESSAGE = "What is 2 * log(10)?"
+
+TEMPLATE_BEFORE = "Act like you are a math teacher\nYour student is asking:"
+TEMPLATE_AFTER = "Give only the answer; refrain from any more information"
+PROMPT = TEMPLATE_BEFORE + '\n' + MESSAGE + '\n' + TEMPLATE_AFTER
+
+
+payload = create_payload(target="ollama",
+                         model="llama3.2:latest", 
+                         prompt=PROMPT, 
+                         temperature=1.0, 
+                         num_ctx=100, 
+                         num_predict=100)
