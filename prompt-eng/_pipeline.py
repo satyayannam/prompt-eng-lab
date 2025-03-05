@@ -1,28 +1,14 @@
 ##
 ## Prompt Engineering Lab
-## Platform for Education and Experimentation with Prompt NEngineering in Generative Intelligent Systems
+## Platform for Education and Experimentation with Prompt Engineering in Generative Intelligent Systems
 ## _pipeline.py :: Simulated GenAI Pipeline 
 ## 
 #  
 # Copyright (c) 2025 Dr. Fernando Koch, The Generative Intelligence Lab @ FAU
 # 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights 
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-# 
 # Documentation and Getting Started:
 #    https://github.com/GenILab-FAU/prompt-eng
-#
-# Disclaimer: 
-# Generative AI has been used extensively while developing this package.
 # 
-
 
 import requests
 import json
@@ -60,15 +46,8 @@ def load_config():
 
 def create_payload(model, prompt, target="ollama", **kwargs):
     """
-    Create the Request Payload in the format required byt the Model Server
-    @NOTE: 
-    Need to adjust here to support multiple target formats
-    target can be only ('ollama' or 'open-webui')
-
-    @TODO it should be able to self_discover the target Model Server
-    [Issue 1](https://github.com/genilab-fau/prompt-eng/issues/1)
+    Create the Request Payload in the format required by the Model Server
     """
-
     payload = None
     if target == "ollama":
         payload = {
@@ -80,19 +59,10 @@ def create_payload(model, prompt, target="ollama", **kwargs):
             payload["options"] = {key: value for key, value in kwargs.items()}
 
     elif target == "open-webui":
-        '''
-        @TODO need to verify the format for 'parameters' for 'open-webui' is correct.
-        [Issue 2](https://github.com/genilab-fau/prompt-eng/issues/2)
-        '''
         payload = {
             "model": model,
             "messages": [ {"role" : "user", "content": prompt } ]
         }
-
-        # @NOTE: Taking not of the syntaxes we tested before; none seems to work so far 
-        #payload.update({key: value for key, value in kwargs.items()})
-        #if kwargs:
-        #   payload["options"] = {key: value for key, value in kwargs.items()}
         
     else:
         print(f'!!ERROR!! Unknown target: {target}')
@@ -103,8 +73,6 @@ def model_req(payload=None):
     """
     Issue request to the Model Server
     """
-        
-    # CUT-SHORT Condition
     try:
         load_config()
     except:
@@ -118,10 +86,8 @@ def model_req(payload=None):
     headers["Content-Type"] = "application/json"
     if api_key: headers["Authorization"] = f"Bearer {api_key}"
 
-    #print(url, headers)
     print(payload)
 
-    # Send out request to Model Provider
     try:
         start_time = time.time()
         response = requests.post(url, data=json.dumps(payload) if payload else None, headers=headers)
@@ -129,19 +95,16 @@ def model_req(payload=None):
     except:
         return -1, f"!!ERROR!! Request failed! You need to adjust prompt-eng/config with URL({url})"
 
-    # Checking the response and extracting the 'response' field
     if response is None:
         return -1, f"!!ERROR!! There was no response (?)"
     elif response.status_code == 200:
-
-        ## @NOTE: Need to adjust here to support multiple response formats
         result = ""
         delta = round(delta, 3)
 
         response_json = response.json()
-        if 'response' in response_json: ## ollama
+        if 'response' in response_json:  # Ollama format
             result = response_json['response']
-        elif 'choices' in response_json: ## open-webui
+        elif 'choices' in response_json:  # Open-webui format
             result = response_json['choices'][0]['message']['content']
         else:
             result = response_json 
@@ -154,22 +117,101 @@ def model_req(payload=None):
     return
 
 
-###
-### DEBUG
-###
+### TESTING MULTIPLE PROMPTING TECHNIQUES ###
 
 if __name__ == "__main__":
-    from _pipeline import create_payload, model_req
-    MESSAGE = "1 + 1"
-    PROMPT = MESSAGE 
-    payload = create_payload(
-                         target="open-webui",   
-                         model="llama3.2:latest", 
-                         prompt=PROMPT, 
-                         temperature=1.0, 
-                         num_ctx=5555555, 
-                         num_predict=1)
+    MESSAGE = "Explain the concept of Decision Trees and their advantages."
 
-    time, response = model_req(payload=payload)
-    print(response)
-    if time: print(f'Time taken: {time}s')
+    # Define different prompting techniques
+    PROMPTING_TECHNIQUES = {
+        "Zero-Shot": MESSAGE,
+
+        "Few-Shot": f"""
+        You are an AI tutor. Answer technical questions in a structured manner.
+
+        Example:
+        Q: Explain Linear Regression.
+        A: Linear Regression is a supervised learning technique used for predicting continuous values...
+
+        Now answer:
+        Q: {MESSAGE}
+        A: 
+        """,
+
+        "Prompt Template": f"""
+        Act like you are a machine learning professor.
+        Your student is asking: {MESSAGE}
+        Provide a structured response with clear examples.
+        """,
+
+        "Chain-of-Thought": f"""
+        A Decision Tree is a flowchart-like structure used for decision-making.
+
+        Step 1: Start at the root node and check the first condition.
+        Step 2: Follow the branches based on attribute values.
+        Step 3: Keep splitting until a leaf node is reached.
+        Step 4: The final classification or regression result is determined.
+
+        Now, explain {MESSAGE} following this logical breakdown.
+        """,
+
+        "Meta-Prompting": f"""
+        Generate a highly structured and effective prompt to help students learn about {MESSAGE}.
+        Ensure the generated prompt guides them step by step and requests detailed explanations with examples.
+        """,
+
+        "Self-Consistency": f"""
+        Generate three different versions of the answer to the following question:
+        {MESSAGE}
+
+        Ensure each version is factually correct but presents the explanation in a different style (technical, simple, and analogy-based).
+        """,
+
+        "Contrastive": f"""
+        Explain {MESSAGE}, but also compare Decision Trees with another machine learning algorithm, such as Neural Networks. 
+        Highlight the key differences in terms of interpretability, computation cost, and real-world applications.
+        """,
+
+        "Role-Based": f"""
+        You are an AI tutor specializing in machine learning. 
+        Explain {MESSAGE} in a way that is easy for a beginner to understand, using simple language and real-life analogies.
+        """,
+
+        "Multi-Turn": f"""
+        Let's go step by step. First, explain what a Decision Tree is in one sentence.
+        Wait for my confirmation before continuing.
+        Once confirmed, explain how Decision Trees make decisions.
+        Then, wait again before proceeding to the advantages of Decision Trees.
+        """,
+
+        "Recursive": f"""
+        Explain {MESSAGE} in a detailed manner.
+        Then, review your explanation and improve it by making it more structured and clear.
+        Finally, summarize your explanation in three key points.
+        """
+    }
+
+    # Model configuration parameters
+    MODEL_NAME = "llama3.2:latest"
+    TEMPERATURE = 0.7
+    NUM_CTX = 200
+    NUM_PREDICT = 200
+
+    # Iterate through each technique and test it
+    for technique, prompt in PROMPTING_TECHNIQUES.items():
+        print(f"\n{'='*40}\n🔹 Testing: {technique}\n{'='*40}")
+        
+        payload = create_payload(target="ollama",
+                                 model=MODEL_NAME, 
+                                 prompt=prompt, 
+                                 temperature=TEMPERATURE, 
+                                 num_ctx=NUM_CTX, 
+                                 num_predict=NUM_PREDICT)
+
+        # Execute model request
+        time, response = model_req(payload=payload)
+        
+        # Print results
+        print(f"📝 Response:\n{response}")
+        if time:
+            print(f'⏱️ Time taken: {time}s')
